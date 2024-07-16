@@ -35,12 +35,9 @@ import org.citra.citra_emu.display.ScreenAdjustmentUtil
 import org.citra.citra_emu.features.hotkeys.HotkeyUtility
 import org.citra.citra_emu.features.settings.model.SettingsViewModel
 import org.citra.citra_emu.features.settings.model.view.InputBindingSetting
-import org.citra.citra_emu.features.settings.model.IntSetting
-import org.citra.citra_emu.features.settings.model.Settings
 import org.citra.citra_emu.fragments.MessageDialogFragment
 import org.citra.citra_emu.utils.ControllerMappingHelper
 import org.citra.citra_emu.utils.FileBrowserHelper
-import org.citra.citra_emu.utils.ForegroundService
 import org.citra.citra_emu.utils.EmulationLifecycleUtil
 import org.citra.citra_emu.utils.EmulationMenuSettings
 import org.citra.citra_emu.utils.ThemeUtil
@@ -49,7 +46,6 @@ import org.citra.citra_emu.viewmodel.EmulationViewModel
 class EmulationActivity : AppCompatActivity() {
     private val preferences: SharedPreferences
         get() = PreferenceManager.getDefaultSharedPreferences(CitraApplication.appContext)
-    private var foregroundService: Intent? = null
     var isActivityRecreated = false
 
     private val settingsViewModel: SettingsViewModel by viewModels()
@@ -62,10 +58,7 @@ class EmulationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtil.setTheme(this)
 
-        isActivityRecreated = savedInstanceState != null
-        if (!isActivityRecreated) {
-            settingsViewModel.settings.loadSettings()
-        }
+        settingsViewModel.settings.loadSettings()
 
         super.onCreate(savedInstanceState)
 
@@ -79,6 +72,8 @@ class EmulationActivity : AppCompatActivity() {
         val navController = navHostFragment.navController
         navController.setGraph(R.navigation.emulation_navigation, intent.extras)
 
+        isActivityRecreated = savedInstanceState != null
+
         // Set these options now so that the SurfaceView the game renders into is the right size.
         enableFullscreenImmersive()
 
@@ -87,10 +82,6 @@ class EmulationActivity : AppCompatActivity() {
             EmulationMenuSettings.swapScreens,
             windowManager.defaultDisplay.rotation
         )
-
-        // Start a foreground service to prevent the app from getting killed in the background
-        foregroundService = Intent(this, ForegroundService::class.java)
-        startForegroundService(foregroundService)
 
         EmulationLifecycleUtil.addShutdownHook(hook = { this.finish() })
     }
@@ -115,7 +106,6 @@ class EmulationActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         EmulationLifecycleUtil.clear()
-        stopForegroundService(this)
         super.onDestroy()
     }
 
@@ -178,11 +168,6 @@ class EmulationActivity : AppCompatActivity() {
             controller.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
-
-
-        val orientation = settingsViewModel.settings.getSection(Settings.SECTION_RENDERER)
-            ?.getSetting(IntSetting.DEVICE_ORIENTATION.key) as IntSetting
-        this.requestedOrientation = orientation.int
     }
 
     // Gets button presses
@@ -460,12 +445,4 @@ class EmulationActivity : AppCompatActivity() {
 
             OnFilePickerResult(result.toString())
         }
-
-    companion object {
-        fun stopForegroundService(activity: Activity) {
-            val startIntent = Intent(activity, ForegroundService::class.java)
-            startIntent.action = ForegroundService.ACTION_STOP
-            activity.startForegroundService(startIntent)
-        }
-    }
 }
