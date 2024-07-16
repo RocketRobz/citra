@@ -173,6 +173,20 @@ class SettingsFragmentPresenter(private val fragmentView: SettingsFragmentView) 
     private fun addGeneralSettings(sl: ArrayList<SettingsItem>) {
         settingsActivity.setToolbarTitle(settingsActivity.getString(R.string.preferences_general))
         sl.apply {
+            add(HeaderSetting(R.string.graphics_ui))
+            add(
+                SingleChoiceSetting(
+                    IntSetting.DEVICE_ORIENTATION,
+                    R.string.device_orientation_title,
+                    R.string.device_orientation_description,
+                    R.array.deviceOrientationEntries,
+                    R.array.deviceOrientationValues,
+                    IntSetting.DEVICE_ORIENTATION.key,
+                    IntSetting.DEVICE_ORIENTATION.defaultValue,
+                )
+            )
+
+            add(HeaderSetting(R.string.emulator_speed))
             add(
                 SwitchSetting(
                     IntSetting.USE_FRAME_LIMIT,
@@ -727,6 +741,18 @@ class SettingsFragmentPresenter(private val fragmentView: SettingsFragmentView) 
                     R.array.textureFilterValues,
                     IntSetting.TEXTURE_FILTER.key,
                     IntSetting.TEXTURE_FILTER.defaultValue
+                )
+            )
+            add(
+                SliderSetting(
+                    IntSetting.DELAY_RENDER_THREAD_US,
+                    R.string.delay_render_thread,
+                    R.string.delay_render_thread_description,
+                    0,
+                    16000,
+                    " μs",
+                    IntSetting.DELAY_RENDER_THREAD_US.key,
+                    IntSetting.DELAY_RENDER_THREAD_US.defaultValue.toFloat()
                 )
             )
 
